@@ -124,7 +124,7 @@ export default function ModelDownloader() {
               <ProgressFilledTrack style={{ backgroundColor: colors.primary }} />
             </Progress>
             <Text 
-              className="text-right min-w-[34px]"
+              className="text-right min-w-8.5"
               style={{ color: colors.textMuted, fontFamily: typography.monoSm.fontFamily, fontSize: typography.monoSm.fontSize }}
             >
               {downloading ? `${progressPercent}%` : "100%"}

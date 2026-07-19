@@ -9,6 +9,7 @@ import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useTheme } from '@/src/theme';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
+import {ChatAi} from "@/ai/chat";
 
 export default function Chat() {
     const { colors, typography, spacing } = useTheme();

@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Pressable, Keyboard } from 'react-native';
+import { Keyboard, Pressable } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
 
 import { useMessageStore } from '../../src/stores/messagestore';
+import { useModelStore } from '../../src/stores/modelstore';
 import { useTheme } from '../../src/theme';
 import { Box } from '../ui/box';
 import { HStack } from '../ui/hstack';
@@ -12,6 +13,7 @@ import { Input, InputField } from '../ui/input';
 const ChatInput = () => {
   const { colors, input, typography, spacing, radius } = useTheme();
   const messageStore = useMessageStore();
+  const modelStore = useModelStore();
 
   const [ text, setText ] = useState('');
   const [ focused, setFocused ] = useState(false);
@@ -26,6 +28,8 @@ const ChatInput = () => {
     };
     messageStore.addMessage(message);
     console.log('Sent message:', message);
+    // Call the chat function to get AI response
+    modelStore.chat();
 
     setText('');
     Keyboard.dismiss();
