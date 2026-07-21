@@ -1,6 +1,7 @@
 import type { LlamaContext } from 'llama.rn';
 import { nanoid } from 'nanoid/non-secure';
 import { create } from 'zustand';
+import { agentLoop } from '../ai/agent';
 import { useMessageStore } from './messagestore';
 
 interface ModelStore {
@@ -80,11 +81,6 @@ export const useModelStore = create<ModelStore>((set) => ({
         throw new Error('Model context is not initialized.');
       }
 
-      // Read the latest history
-      const messages = useMessageStore.getState().getMessages();
-      console.log('Current messages:', messages);
-
-      // Create a placeholder message for the AI
       const aiMessageId = nanoid();
       useMessageStore.getState().addMessage({
         id: aiMessageId,
@@ -92,21 +88,11 @@ export const useModelStore = create<ModelStore>((set) => ({
         user: 'ai',
       });
 
-      // Generate response with streaming callback
-      const response = await context.completion(
-        {
-          messages,
-          n_predict: 256, // limit output length to prevent infinite generation
-        },
-        (data) => {
-          // Stream tokens to the UI in real-time
-          if (data.token) {
-            useMessageStore.getState().appendMessageText(aiMessageId, data.token);
-          }
-        },
-      );
+      await agentLoop(context, aiMessageId, (token) => {
+        useMessageStore.getState().appendMessageText(aiMessageId, token);
+      });
 
-      console.log('AI response finished:', response.text);
+      console.log('AI response finished');
     } catch (error) {
       console.error('Error in chat:', error);
       set({ error: (error as Error).message });

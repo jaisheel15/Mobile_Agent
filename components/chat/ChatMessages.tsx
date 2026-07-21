@@ -3,7 +3,7 @@ import { Box } from '../ui/box';
 import { Card } from '../ui/card';
 import { Text } from '../ui/text';
 
-const ChatMessages = ({ text, user }: { text: string; user: 'ai' | 'human' }) => {
+const ChatMessages = ({ text, user }: { text: string; user: 'ai' | 'human' | 'tool' }) => {
     const { colors, typography } = useTheme();
     const isAi = user === 'ai';
 

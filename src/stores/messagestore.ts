@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 
-type user = 'ai' | 'human';
+type user = 'ai' | 'human' | 'tool';
 
 type message = {
   id: string;
@@ -10,7 +10,7 @@ type message = {
 };
 
 type ChatMessage = {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'tool';
   content: string;
 };
 
@@ -33,7 +33,7 @@ export const useMessageStore = create<MessageStore>((set, get) => ({
   })),
   getMessages: () => {
     return get().messages.map((msg) => ({
-      role: msg.user === "human" ? "user" : "assistant",
+      role: msg.user === "human" ? "user" : msg.user === "tool" ? "tool" : "assistant",
       content: msg.message,
     }));
   },

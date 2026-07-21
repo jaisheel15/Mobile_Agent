@@ -1,9 +1,8 @@
 import { useModelStore } from "../stores/modelstore";
 import { useMessageStore } from "../stores/messagestore";
+import { nanoid } from "nanoid/non-secure";
 
-export async function ChatAi(
-    // message: string
-) {
+export async function ChatAi() {
   const { context } = useModelStore.getState();
   console.log("Current context:", context);
 
@@ -12,7 +11,7 @@ export async function ChatAi(
   }
 
 //   const userMessage = {
-//     id: crypto.randomUUID(),
+//     id: nanoid(),
 //     message,
 //     user: "human" as const,
 //   };
@@ -29,12 +28,13 @@ export async function ChatAi(
   const response = await context.completion({
     messages,
   });
+  
 
   console.log("AI response:", response.text);
 
   // Store AI response
   useMessageStore.getState().addMessage({
-    id: crypto.randomUUID(),
+    id: nanoid(),
     message: response.text,
     user: "ai",
   });
