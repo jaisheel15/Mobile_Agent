@@ -1,0 +1,97 @@
+name: Android Release Build
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'   # Triggers on tags like v1.0.0, v1.1.0, etc.
+
+jobs:
+  build-android:
+    name: Build Android APK & Create GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Setup Expo & EAS
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build Android APK (EAS)
+        id: eas_build
+        run: |
+          BUILD_OUTPUT=$(eas build \
+            --platform android \
+            --profile production \
+            --non-interactive \
+            --json 2>/dev/null)
+          echo "build_output=$BUILD_OUTPUT" >> $GITHUB_OUTPUT
+
+          # Extract APK URL from EAS JSON output
+          APK_URL=$(echo "$BUILD_OUTPUT" | python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          builds = data if isinstance(data, list) else [data]
+          print(builds[0].get('artifacts', {}).get('buildUrl', ''))
+          ")
+          echo "apk_url=$APK_URL" >> $GITHUB_OUTPUT
+          echo "APK URL: $APK_URL"
+
+      - name: Download APK artifact
+        run: |
+          APK_URL="${{ steps.eas_build.outputs.apk_url }}"
+          if [ -n "$APK_URL" ]; then
+            curl -L "$APK_URL" -o mobile-agent-${{ github.ref_name }}.apk
+            echo "APK downloaded successfully"
+          else
+            echo "Warning: APK URL not found, trying eas build:list..."
+            eas build:list --platform android --limit 1 --json > build_list.json
+            APK_URL=$(python3 -c "
+          import json
+          data = json.load(open('build_list.json'))
+          print(data[0].get('artifacts', {}).get('buildUrl', ''))
+          ")
+            curl -L "$APK_URL" -o mobile-agent-${{ github.ref_name }}.apk
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Mobile Agent ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          body: |
+            ## 📱 Mobile Agent ${{ github.ref_name }}
+
+            ### What's New
+            See [CHANGELOG.md](./CHANGELOG.md) or the commit history for details.
+
+            ### Installation
+            1. Download the `.apk` file below
+            2. On your Android device, go to **Settings → Security** and enable **Install unknown apps** for your file manager or browser
+            3. Open the downloaded APK and install
+            4. Launch **Mobile Agent**, go to **Settings**, and download the AI model (~2.5 GB)
+
+            > ⚠️ This app uses on-device LLM inference (`llama.rn`). The model must be downloaded separately on first launch.
+
+            ### Requirements
+            - Android 9.0+ (API 28+)
+            - ~3 GB free storage (2.5 GB model + app)
+            - ARM64 device (most modern Android phones)
+          draft: false
+          prerelease: false
+          files: mobile-agent-${{ github.ref_name }}.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
