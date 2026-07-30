@@ -6,35 +6,22 @@ import { useMessageStore } from './messagestore';
 
 interface ModelStore {
   progress: number;
-
   downloading: boolean;
-
   downloaded: boolean;
-
   loading: boolean;
-
   loaded: boolean;
-
+  thinking: boolean;
   modelPath: string | null;
-
   context: LlamaContext | null;
-
   error: string | null;
 
   setProgress: (value: number) => void;
-
   setDownloading: (value: boolean) => void;
-
   setDownloaded: (value: boolean) => void;
-
   setLoading: (value: boolean) => void;
-
   setLoaded: (value: boolean) => void;
-
   setModelPath: (path: string) => void;
-
   setContext: (ctx: LlamaContext) => void;
-
   setError: (err: string | null) => void;
 
   chat: () => Promise<void>;
@@ -42,40 +29,29 @@ interface ModelStore {
 
 export const useModelStore = create<ModelStore>((set) => ({
   progress: 0,
-
   downloading: false,
-
   downloaded: false,
-
   loading: false,
-
   loaded: false,
-
+  thinking: false,
   modelPath: null,
-
   context: null,
-
   error: null,
 
   setProgress: (progress) => set({ progress }),
-
   setDownloading: (downloading) => set({ downloading }),
-
   setDownloaded: (downloaded) => set({ downloaded }),
-
   setLoading: (loading) => set({ loading }),
-
   setLoaded: (loaded) => set({ loaded }),
-
   setModelPath: (modelPath) => set({ modelPath }),
-
   setContext: (context) => set({ context }),
-
   setError: (error) => set({ error }),
 
   chat: async () => {
     try {
       console.log('Starting chat...');
+      set({ thinking: true });
+
       const { context } = useModelStore.getState();
       if (!context) {
         throw new Error('Model context is not initialized.');
@@ -96,6 +72,8 @@ export const useModelStore = create<ModelStore>((set) => ({
     } catch (error) {
       console.error('Error in chat:', error);
       set({ error: (error as Error).message });
+    } finally {
+      set({ thinking: false });
     }
   },
 }));

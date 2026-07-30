@@ -3,6 +3,7 @@ import { useMessageStore } from '../stores/messagestore';
 import { executeTool } from './tool/executor';
 import { initializeTools } from './tool/initialize';
 import { getAllTools } from './tool/registry';
+import { getSystemPrompt } from './systemPrompt';
 import { nanoid } from 'nanoid/non-secure';
 
 initializeTools();
@@ -11,7 +12,12 @@ export async function agentLoop(context: LlamaContext, aiMessageId: string, onTo
   let hasToolCalls: boolean;
   do {
     hasToolCalls = false;
-    const messages = useMessageStore.getState().getMessages();
+    const rawMessages = useMessageStore.getState().getMessages();
+
+    // Prepend system prompt as the first message
+    const systemMessage = { role: 'system' as const, content: getSystemPrompt() };
+    const messages = [systemMessage, ...rawMessages];
+
     const tools = getAllTools().map((t) => ({ type: 'function' as const, function: { name: t.name, description: t.description, parameters: t.parameters } }));
     const response = await context.completion(
         { messages,
@@ -39,6 +45,16 @@ export async function agentLoop(context: LlamaContext, aiMessageId: string, onTo
           });
         } catch (error) {
           console.error(`Error executing tool ${name}:`, error);
+          // Feed the error back to the LLM so it can respond gracefully
+          useMessageStore.getState().addMessage({
+            id: nanoid(),
+            message: JSON.stringify({
+              name,
+              result: null,
+              error: error instanceof Error ? error.message : 'Unknown error',
+            }),
+            user: 'tool',
+          });
         }
       }
       hasToolCalls = true;
