@@ -1,4 +1,4 @@
-import { hasTool , getTool , getAllTools } from "./registry"
+import { hasTool, getTool } from "./registry"
 
 type ToolResult = {
     readonly name: string;
@@ -23,8 +23,3 @@ export async function executeTool(name: string, args: Record<string, any>): Prom
             return { name, result: null, error: error.message || "Unknown error" };
         }
     }
-
-
-
-
-

@@ -23,17 +23,17 @@ type MessageStore = {
   addMessage: (message: Omit<Message, 'timestamp'>) => void;
   appendMessageText: (id: string, text: string) => void;
   getMessages: () => ChatMessage[];
-  loadMessages: (conversationId: string) => void;
+  loadMessages: (conversationId: string) => Promise<void>;
   clearMessages: () => void;
-  persistMessages: () => void;
+  persistMessages: () => Promise<void>;
 };
 
 const CONVERSATIONS_DIR_PATH = Paths.document + '/conversations';
 
-function ensureConversationsDir() {
+async function ensureConversationsDir() {
   const dir = new Directory(CONVERSATIONS_DIR_PATH);
   if (!dir.exists) {
-    dir.create({ intermediates: true, idempotent: true });
+    await dir.create({ intermediates: true, idempotent: true });
   }
 }
 
@@ -51,7 +51,7 @@ export const useMessageStore = create<MessageStore>((set, get) => ({
     const fullMessage: Message = { ...message, timestamp: Date.now() };
     set((state) => ({ messages: [...state.messages, fullMessage] }));
     // Persist after adding, in background
-    setTimeout(() => get().persistMessages(), 0);
+    setTimeout(() => void get().persistMessages(), 0);
   },
 
   appendMessageText: (id, text) => {
@@ -74,13 +74,13 @@ export const useMessageStore = create<MessageStore>((set, get) => ({
     }));
   },
 
-  loadMessages: (conversationId) => {
-    ensureConversationsDir();
+  loadMessages: async (conversationId) => {
+    await ensureConversationsDir();
     const file = getConversationFile(conversationId);
 
     if (file.exists) {
       try {
-        const content = file.textSync();
+        const content = await file.text();
         const messages = JSON.parse(content) as Message[];
         set({ messages, conversationId });
       } catch (e) {
@@ -94,17 +94,17 @@ export const useMessageStore = create<MessageStore>((set, get) => ({
 
   clearMessages: () => set({ messages: [], conversationId: null }),
 
-  persistMessages: () => {
+  persistMessages: async () => {
     const { conversationId, messages } = get();
     if (!conversationId || messages.length === 0) return;
 
-    ensureConversationsDir();
+    await ensureConversationsDir();
     const file = getConversationFile(conversationId);
     try {
       if (!file.exists) {
-        file.create();
+        await file.create();
       }
-      file.write(JSON.stringify(messages));
+      await file.write(JSON.stringify(messages));
     } catch (e) {
       console.error('Failed to persist conversation:', e);
     }

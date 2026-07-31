@@ -100,20 +100,22 @@ components/
 ### Prerequisites
 
 - **Node.js** ≥ 18
-- **bun** or **npm**
+- **bun**
 - An Android or iOS device / emulator with enough storage (~2.5 GB for the model)
 
 ### Install & Run
 
 ```bash
 # 1. Install dependencies
-npm install --legacy-peer-deps
+bun install
 
 # 2. Start the Expo dev server
-npx expo start
+bun run start
 ```
 
 Then press **`a`** for Android or **`i`** for iOS in the terminal, or scan the QR code with Expo Go.
+
+> **Note:** EAS / CI builds use `npm` + `package-lock.json` (with `.npmrc` `legacy-peer-deps=true`). Use `bun` for local development only.
 
 ### Download the Model
 

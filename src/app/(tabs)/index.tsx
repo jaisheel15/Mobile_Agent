@@ -22,31 +22,31 @@ export default function Home() {
   const { loaded } = useModelStore();
 
   useEffect(() => {
-    loadConversations();
+    void loadConversations();
   }, [loadConversations]);
 
-  function handleStartNewChat() {
-    createConversation();
+  async function handleStartNewChat() {
+    await createConversation();
     router.push('/(tabs)/chat');
   }
 
-  function handleOpenConversation(id: string) {
-    switchConversation(id);
+  async function handleOpenConversation(id: string) {
+    await switchConversation(id);
     router.push('/(tabs)/chat');
   }
 
-  function handleQuickPrompt(promptText: string) {
-    const convId = createConversation();
+  async function handleQuickPrompt(promptText: string) {
+    const convId = await createConversation();
     useMessageStore.getState().addMessage({
       id: nanoid(),
       message: promptText,
       user: 'human',
     });
-    useConversationStore.getState().updateConversationMeta(convId, {
+    await useConversationStore.getState().updateConversationMeta(convId, {
       title: promptText,
       preview: promptText,
     });
-    useModelStore.getState().chat();
+    void useModelStore.getState().chat();
     router.push('/(tabs)/chat');
   }
 
@@ -251,7 +251,7 @@ export default function Home() {
                   className="mt-2 text-center"
                   style={{ color: colors.textMuted, fontFamily: typography.body.fontFamily }}
                 >
-                  No conversations yet. Tap "New Conversation" or select a quick action above.
+                  No conversations yet. Tap &quot;New Conversation&quot; or select a quick action above.
                 </Text>
               </Box>
             ) : (
@@ -297,7 +297,7 @@ export default function Home() {
                     <Pressable
                       onPress={(e) => {
                         e.stopPropagation();
-                        deleteConversation(conv.id);
+                        void deleteConversation(conv.id);
                       }}
                       className="p-2 rounded-full"
                     >

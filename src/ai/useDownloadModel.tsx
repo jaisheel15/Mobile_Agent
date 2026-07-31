@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 
 import { downloadModel, getModelFile, isModelDownloaded } from "./modelDownloader";
 
@@ -58,25 +58,3 @@ export function useDownloadModel() {
   return { startDownload };
 }
 
-/**
- * Auto-loads the model when the component mounts — only if the model is already
- * downloaded and not yet loaded. Suitable for mounting once at the app root
- * after the user has already triggered a download.
- */
-export function useLoadModel() {
-  const store = useModelStore();
-  const { startDownload } = useDownloadModel();
-
-  useEffect(() => {
-    // Auto-load if the model is on disk but not yet in memory
-    if (
-      store.downloaded &&
-      store.modelPath &&
-      !store.loaded &&
-      !store.loading &&
-      !store.downloading
-    ) {
-      startDownload();
-    }
-  }, [store.downloaded, store.modelPath, store.loaded, store.loading, store.downloading]);
-}

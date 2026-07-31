@@ -15,21 +15,21 @@ type ConversationStore = {
   conversations: Conversation[];
   activeConversationId: string | null;
 
-  loadConversations: () => void;
-  createConversation: () => string;
-  switchConversation: (id: string) => void;
-  deleteConversation: (id: string) => void;
-  updateConversationMeta: (id: string, updates: Partial<Pick<Conversation, 'title' | 'preview'>>) => void;
-  persistConversationList: () => void;
+  loadConversations: () => Promise<void>;
+  createConversation: () => Promise<string>;
+  switchConversation: (id: string) => Promise<void>;
+  deleteConversation: (id: string) => Promise<void>;
+  updateConversationMeta: (id: string, updates: Partial<Pick<Conversation, 'title' | 'preview'>>) => Promise<void>;
+  persistConversationList: () => Promise<void>;
 };
 
 const CONVERSATIONS_DIR_PATH = Paths.document + '/conversations';
 const CONVERSATIONS_INDEX_PATH = Paths.document + '/conversations_index.json';
 
-function ensureDir() {
+async function ensureDir() {
   const dir = new Directory(CONVERSATIONS_DIR_PATH);
   if (!dir.exists) {
-    dir.create({ intermediates: true, idempotent: true });
+    await dir.create({ intermediates: true, idempotent: true });
   }
 }
 
@@ -37,11 +37,11 @@ export const useConversationStore = create<ConversationStore>((set, get) => ({
   conversations: [],
   activeConversationId: null,
 
-  loadConversations: () => {
+  loadConversations: async () => {
     const indexFile = new File(CONVERSATIONS_INDEX_PATH);
     if (indexFile.exists) {
       try {
-        const content = indexFile.textSync();
+        const content = await indexFile.text();
         const conversations = JSON.parse(content) as Conversation[];
         conversations.sort((a, b) => b.updatedAt - a.updatedAt);
         set({ conversations });
@@ -52,7 +52,7 @@ export const useConversationStore = create<ConversationStore>((set, get) => ({
     }
   },
 
-  createConversation: () => {
+  createConversation: async () => {
     const id = nanoid();
     const now = Date.now();
     const newConversation: Conversation = {
@@ -70,22 +70,22 @@ export const useConversationStore = create<ConversationStore>((set, get) => ({
 
     useMessageStore.getState().clearMessages();
     useMessageStore.getState().setConversationId(id);
-    get().persistConversationList();
+    await get().persistConversationList();
 
     return id;
   },
 
-  switchConversation: (id) => {
-    useMessageStore.getState().persistMessages();
+  switchConversation: async (id) => {
+    await useMessageStore.getState().persistMessages();
     set({ activeConversationId: id });
-    useMessageStore.getState().loadMessages(id);
+    await useMessageStore.getState().loadMessages(id);
   },
 
-  deleteConversation: (id) => {
-    ensureDir();
+  deleteConversation: async (id) => {
+    await ensureDir();
     const file = new File(`${CONVERSATIONS_DIR_PATH}/${id}.json`);
     if (file.exists) {
-      file.delete();
+      await file.delete();
     }
 
     set((state) => {
@@ -100,26 +100,26 @@ export const useConversationStore = create<ConversationStore>((set, get) => ({
       return { conversations, activeConversationId };
     });
 
-    get().persistConversationList();
+    await get().persistConversationList();
   },
 
-  updateConversationMeta: (id, updates) => {
+  updateConversationMeta: async (id, updates) => {
     set((state) => ({
       conversations: state.conversations.map((c) =>
         c.id === id ? { ...c, ...updates, updatedAt: Date.now() } : c
       ),
     }));
-    get().persistConversationList();
+    await get().persistConversationList();
   },
 
-  persistConversationList: () => {
+  persistConversationList: async () => {
     const { conversations } = get();
     const indexFile = new File(CONVERSATIONS_INDEX_PATH);
     try {
       if (!indexFile.exists) {
-        indexFile.create();
+        await indexFile.create();
       }
-      indexFile.write(JSON.stringify(conversations));
+      await indexFile.write(JSON.stringify(conversations));
     } catch (e) {
       console.error('Failed to persist conversation index:', e);
     }

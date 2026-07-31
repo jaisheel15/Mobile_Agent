@@ -20,8 +20,8 @@ export default function Chat() {
   const activeConv = conversations.find((c) => c.id === activeConversationId);
   const title = activeConv ? activeConv.title : 'Agent Chat';
 
-  function handleNewChat() {
-    createConversation();
+  async function handleNewChat() {
+    await createConversation();
   }
 
   return (
@@ -42,7 +42,7 @@ export default function Chat() {
             {/* Left: avatar + title */}
             <HStack className="items-center" style={{ gap: spacing[3] }}>
               <Box
-                className="w-9.5 h-9.5 rounded-full items-center justify-center"
+                className="w-[38px] h-[38px] rounded-full items-center justify-center"
                 style={{
                   backgroundColor: colors.primary,
                   shadowColor: colors.primary,
