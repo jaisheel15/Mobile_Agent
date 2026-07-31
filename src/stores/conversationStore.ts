@@ -23,13 +23,12 @@ type ConversationStore = {
   persistConversationList: () => Promise<void>;
 };
 
-const CONVERSATIONS_DIR_PATH = Paths.document + '/conversations';
-const CONVERSATIONS_INDEX_PATH = Paths.document + '/conversations_index.json';
+const CONVERSATIONS_DIR = new Directory(Paths.document, 'conversations');
+const CONVERSATIONS_INDEX_FILE = new File(Paths.document, 'conversations_index.json');
 
 async function ensureDir() {
-  const dir = new Directory(CONVERSATIONS_DIR_PATH);
-  if (!dir.exists) {
-    await dir.create({ intermediates: true, idempotent: true });
+  if (!CONVERSATIONS_DIR.exists) {
+    await CONVERSATIONS_DIR.create({ intermediates: true, idempotent: true });
   }
 }
 
@@ -38,7 +37,7 @@ export const useConversationStore = create<ConversationStore>((set, get) => ({
   activeConversationId: null,
 
   loadConversations: async () => {
-    const indexFile = new File(CONVERSATIONS_INDEX_PATH);
+    const indexFile = CONVERSATIONS_INDEX_FILE;
     if (indexFile.exists) {
       try {
         const content = await indexFile.text();
@@ -83,7 +82,7 @@ export const useConversationStore = create<ConversationStore>((set, get) => ({
 
   deleteConversation: async (id) => {
     await ensureDir();
-    const file = new File(`${CONVERSATIONS_DIR_PATH}/${id}.json`);
+    const file = new File(CONVERSATIONS_DIR, `${id}.json`);
     if (file.exists) {
       await file.delete();
     }
@@ -114,7 +113,7 @@ export const useConversationStore = create<ConversationStore>((set, get) => ({
 
   persistConversationList: async () => {
     const { conversations } = get();
-    const indexFile = new File(CONVERSATIONS_INDEX_PATH);
+    const indexFile = CONVERSATIONS_INDEX_FILE;
     try {
       if (!indexFile.exists) {
         await indexFile.create();

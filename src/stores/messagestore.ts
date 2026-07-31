@@ -28,17 +28,16 @@ type MessageStore = {
   persistMessages: () => Promise<void>;
 };
 
-const CONVERSATIONS_DIR_PATH = Paths.document + '/conversations';
+const CONVERSATIONS_DIR = new Directory(Paths.document, 'conversations');
 
 async function ensureConversationsDir() {
-  const dir = new Directory(CONVERSATIONS_DIR_PATH);
-  if (!dir.exists) {
-    await dir.create({ intermediates: true, idempotent: true });
+  if (!CONVERSATIONS_DIR.exists) {
+    await CONVERSATIONS_DIR.create({ intermediates: true, idempotent: true });
   }
 }
 
 function getConversationFile(conversationId: string): File {
-  return new File(CONVERSATIONS_DIR_PATH + `/${conversationId}.json`);
+  return new File(CONVERSATIONS_DIR, `${conversationId}.json`);
 }
 
 export const useMessageStore = create<MessageStore>((set, get) => ({
