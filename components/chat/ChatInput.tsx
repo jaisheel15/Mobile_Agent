@@ -22,14 +22,14 @@ const ChatInput = () => {
   const isThinking = modelStore.thinking;
   const canSend = text.trim().length > 0 && !isThinking;
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const trimmed = text.trim();
     if (!trimmed || isThinking) return;
 
     // Ensure we have an active conversation
     let convId = conversationStore.activeConversationId;
     if (!convId) {
-      convId = conversationStore.createConversation();
+      convId = await conversationStore.createConversation();
     }
 
     // Add user message
@@ -44,7 +44,7 @@ const ChatInput = () => {
     const currentConv = conversationStore.conversations.find((c) => c.id === convId);
     if (currentConv && (currentConv.title === 'New Chat' || !currentConv.preview)) {
       const title = trimmed.length > 30 ? trimmed.substring(0, 30) + '…' : trimmed;
-      conversationStore.updateConversationMeta(convId, {
+      await conversationStore.updateConversationMeta(convId, {
         title,
         preview: trimmed,
       });
@@ -54,7 +54,7 @@ const ChatInput = () => {
     Keyboard.dismiss();
 
     // Trigger AI completion
-    modelStore.chat();
+    void modelStore.chat();
   };
 
   return (
@@ -98,7 +98,7 @@ const ChatInput = () => {
       <Pressable
         onPress={handleSend}
         disabled={!canSend}
-        className="w-8.5 h-8.5 rounded-[17px] items-center justify-center mb-0.5"
+        className="w-[34px] h-[34px] rounded-[17px] items-center justify-center mb-0.5"
         style={({ pressed }) => ({
           backgroundColor: canSend ? colors.primary : colors.surfaceVariant,
           opacity: pressed || !canSend ? 0.6 : 1,

@@ -9,7 +9,6 @@ import { Text } from "@/components/ui/text";
 import { Button, ButtonText, ButtonSpinner } from "@/components/ui/button";
 import { Progress, ProgressFilledTrack } from "@/components/ui/progress";
 import { useTheme } from "@/src/theme";
-import { StyleSheet } from "react-native";
 
 export default function ModelDownloader() {
   const store = useModelStore();
@@ -124,7 +123,7 @@ export default function ModelDownloader() {
               <ProgressFilledTrack style={{ backgroundColor: colors.primary }} />
             </Progress>
             <Text 
-              className="text-right min-w-8.5"
+              className="text-right min-w-[34px]"
               style={{ color: colors.textMuted, fontFamily: typography.monoSm.fontFamily, fontSize: typography.monoSm.fontSize }}
             >
               {downloading ? `${progressPercent}%` : "100%"}

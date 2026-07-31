@@ -1,6 +1,5 @@
-import { useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { FlashList } from '@shopify/flash-list';
-import { FlatList } from 'react-native';
 import { useMessageStore } from '../../src/stores/messagestore';
 import { useModelStore } from '../../src/stores/modelstore';
 import { useTheme } from '../../src/theme';
@@ -15,7 +14,11 @@ const ChatView = () => {
   const messages = useMessageStore((state) => state.messages);
   const thinking = useModelStore((state) => state.thinking);
   const { colors, typography, radius } = useTheme();
-  const listRef = useRef<FlatList<Message>>(null);
+  const listRef = useRef<React.ElementRef<typeof FlashList<Message>>>(null);
+
+  const renderMessage = React.useCallback(({ item }: { item: Message }) => (
+    <ChatMessages text={item.message} user={item.user} />
+  ), []);
 
   useEffect(() => {
     if (messages.length > 0 || thinking) {
@@ -28,13 +31,14 @@ const ChatView = () => {
   return (
     <Box className="flex-1 w-full">
       <FlashList
-        ref={listRef as any}
+        ref={listRef}
         data={messages}
         keyboardShouldPersistTaps="handled"
+        onContentSizeChange={() =>
+          listRef.current?.scrollToEnd({ animated: true })
+        }
         ItemSeparatorComponent={() => <Box className="h-3" />}
-        renderItem={({ item }) => (
-          <ChatMessages text={item.message} user={item.user} />
-        )}
+        renderItem={renderMessage}
         ListFooterComponent={() =>
           thinking ? (
             <Box className="w-full flex-row justify-start px-4 pt-3">
